@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "todo"
+version = "0.1.0"
+description = ""
+authors = ["Yasaman karimi <yasmin.kmi.ag@gmail.com>"]
+readme = "README.md"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "todo_app.settings"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+
+
+[tool.poetry.dependencies]
+python = "^3.10"
+django = "^5.1"
+django-ninja = "^1.2.2"
+psycopg = "^3.2.1"
+redis = "^5.0.8"
+django-cors-headers = "^4.4.0"
+ninja-api-key = "^1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+email-validator = "^2.2.0"
+django-extensions = "^3.2.3"
+black = "^24.8.0"
+mypy = "^1.11.1"
+
+
+[tool.poetry.group.test.dependencies]
+pytest-django = "^4.9.0"
+pytest = "^8.3.3"
+pytest-cov = "^5.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

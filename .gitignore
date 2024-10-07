@@ -1,0 +1,25 @@
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# Virtual Environment
+venv/
+env/
+.env
+
+# Django Specific
+*.log
+*.sqlite3
+db.sqlite3
+media/
+
+# IDE Specific
+*.idea/
+
+
+# Visual Studio
+.vscode/
+.history/
+*.code-workspace
