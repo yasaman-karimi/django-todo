@@ -1,7 +1,9 @@
 import pytest
 from django.test.client import Client
+from ninja_apikey.models import APIKey
 
-from apps.user.schema import UserSignIn
+from apps.user.models import User
+from apps.user.schema import UserSignIn, UserUpdateIn
 
 
 @pytest.mark.django_db
@@ -87,3 +89,115 @@ class TestLoginEndpoint:
         )
 
         assert response.status_code == 401
+
+
+@pytest.mark.django_db
+class TestLogoutEndpoint:
+
+    def test_logout_successful(self, client: Client, user: User, api_key: str):
+        client.force_login(user)
+        response = client.post(
+            "/api/users/logout",
+            headers={"X-API-Key": api_key},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json() == {"message": "successful"}
+        prefix = api_key.split(".", maxsplit=1)[0]
+        assert not APIKey.objects.filter(prefix=prefix).exists()
+
+    def test_logout_unauthorized_anonymous(self, client: Client):
+        response = client.post("/api/users/logout", content_type="application/json")
+        assert response.status_code == 401
+        assert response.json() == {"detail": "Unauthorized"}
+
+    def test_logout_no_api_key(self, client: Client, user):
+        client.force_login(user)
+        response = client.post(
+            "/api/users/logout",
+            headers={"X-API-Key": ""},
+            content_type="application/json",
+        )
+        assert response.status_code == 401
+        assert response.json() == {"detail": "Unauthorized"}
+
+    def test_logout_invalid_api_key_format(self, client: Client, user, api_key):
+        client.force_login(user)
+        response = client.post(
+            "/api/users/logout",
+            headers={"X-API-Key": f"{api_key}invalidtoken"},
+            content_type="application/json",
+        )
+        assert response.status_code == 401
+        assert response.json() == {"detail": "Unauthorized"}
+
+
+@pytest.mark.django_db
+class TestUpdateEndpoint:
+    def test_user_update_success(self, client: Client, user, api_key):
+        client.force_login(user)
+
+        update_data = UserUpdateIn(
+            email="new_email@example.com",
+            first_name="NewFirstName",
+            last_name="NewLastName",
+            username="newusername",
+            password="newpassword123",
+        )
+
+        response = client.patch(
+            "/api/users/",
+            update_data.dict(),
+            headers={"X-API-Key": api_key},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        user.refresh_from_db()
+        assert user.email == "new_email@example.com"
+        assert user.first_name == "NewFirstName"
+        assert user.last_name == "NewLastName"
+        assert user.username == "newusername"
+        assert user.check_password("newpassword123")
+
+    def test_user_update_user_not_found(self, client: Client):
+
+        update_data = UserUpdateIn(
+            email="email@example.com",
+            first_name="FirstName",
+            last_name="LastName",
+            username="username",
+            password="password",
+        )
+
+        response = client.patch(
+            "/api/users/",
+            update_data.dict(),
+            kwargs={"id": 999},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 401
+
+    def test_user_update_username_conflict(self, client: Client, user, api_key):
+        client.force_login(user)
+        another_user = User.objects.create(
+            username="testuser",
+            email="test@example.com",
+            password="password123",
+        )
+        update_data = UserUpdateIn(
+            username=another_user.username,
+            password=user.password,
+            email=user.email,
+        )
+
+        response = client.patch(
+            "/api/users/",
+            update_data.dict(),
+            headers={"X-API-Key": api_key},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 409
+        assert response.json() == {"message": "Username or email already exists."}
