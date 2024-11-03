@@ -5,7 +5,7 @@ from ninja import Router
 from ninja_apikey.security import APIKeyAuth
 
 from apps.todo.models import Todo
-from apps.todo.schema import Message, TodoIn, TodoOut
+from apps.todo.schema import Message, TodoIn, TodoOut, TodoUpdateIn
 
 router = Router()
 auth = APIKeyAuth()
@@ -28,14 +28,16 @@ def get_todos(request):
     return Todo.objects.filter(owner=request.user)
 
 
-@router.post("/", response=TodoOut)
+@router.post("/", response={200: TodoOut, 400: Message})
 def create_todo(request, todo: TodoIn):
+    if not todo.input:
+        return 400, Message(message="input is empty")
     new_todo = Todo.objects.create(input=todo.input, owner=request.user)
     return TodoOut.from_orm(new_todo)
 
 
 @router.patch("/{uuid:todo_id}", response=TodoOut)
-def edit_todo(request, newInfo: TodoIn, todo_id: UUID):
+def edit_todo(request, newInfo: TodoUpdateIn, todo_id: UUID):
     if not todo_id:
         raise Http404("Todo ID not provided")
     try:

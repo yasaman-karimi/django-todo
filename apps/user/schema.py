@@ -13,7 +13,11 @@ class UserIn(Schema):
 
     @field_validator("password", mode="after")
     @classmethod
-    def password_validator(cls, password: str, info: ValidationInfo):
+    def password_validator(
+        cls, password: str, info: ValidationInfo, check_fields=False
+    ):
+        if password is None:
+            raise ValueError("Password is required")
         if password == "":
             raise ValueError("password is requierd")
         if len(password) < 8:
