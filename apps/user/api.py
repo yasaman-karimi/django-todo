@@ -1,7 +1,9 @@
+from datetime import timedelta
+
 from django.contrib.auth import authenticate
 from django.db import IntegrityError
 from django.shortcuts import Http404
-from django.utils.timezone import localtime
+from django.utils import timezone
 from ninja import Router
 from ninja_apikey.models import APIKey
 from ninja_apikey.security import APIKeyAuth, generate_key
@@ -23,7 +25,6 @@ router = Router()
 
 @router.post("/", auth=None, response={200: UserSignUpOut, 409: Message})
 def signup(request, userInfo: UserIn):
-
     if User.objects.filter(email=userInfo.email).exists():
         return 409, Message(message="message: Email address is already registered.")
     try:
@@ -37,16 +38,19 @@ def signup(request, userInfo: UserIn):
 
 @router.post("/login", auth=None, response={200: UserOut, 401: Message})
 def login(request, userInfo: UserSignIn):
-
     user = authenticate(request, username=userInfo.username, password=userInfo.password)
     if user is None:
         return 401, Message(message="Unauthorized")
     key = generate_key()
     APIKey.objects.create(
-        prefix=key.prefix, hashed_key=key.hashed_key, user=user, label="login"
+        prefix=key.prefix,
+        hashed_key=key.hashed_key,
+        user=user,
+        label="login",
+        expires_at=timezone.now() + timedelta(days=30),
     )
     token = f"{key.prefix}.{key.key}"
-    user.last_login = localtime().date()
+    user.last_login = timezone.now()
     user.save()
     return UserOut(
         id=user.id,

@@ -18,6 +18,7 @@ psycopg = "^3.2.1"
 redis = "^5.0.8"
 django-cors-headers = "^4.4.0"
 ninja-api-key = "^1.0.0"
+celery = { extras = ["redis"], version = "^5.4.0" }
 
 [tool.poetry.group.dev.dependencies]
 email-validator = "^2.2.0"

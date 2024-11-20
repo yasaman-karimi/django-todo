@@ -139,7 +139,14 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 
 USE_TZ = True
+# Celery settings
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
+# Optional settings
+CELERY_TASK_SERIALIZER = "json"
+CELERY_ACCEPT_CONTENT = ["json"]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
@@ -150,3 +157,21 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+API_KEY_EXPIRATION_DAYS = 10
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "celery": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+    },
+}
