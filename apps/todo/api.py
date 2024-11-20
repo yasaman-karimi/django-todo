@@ -46,7 +46,6 @@ def edit_todo(request, newInfo: TodoUpdateIn, todo_id: UUID):
         raise Http404("Todo not found")
     if newInfo.input is not None:
         todo.input = newInfo.input
-
     if newInfo.done is not None:
         todo.done = newInfo.done
     if newInfo.priority is not None:
